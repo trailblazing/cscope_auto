@@ -1,19 +1,13 @@
-NAME=cscope_dynamic
-VERSION=0.7
+PLUGIN = cscope_auto
 
-SRC=	plugin/cscope_dynamic.vim
+SOURCE = plugin/cscope_auto.vim
+SOURCE += autoload/cscope_auto.vim
 
-vimball: ${NAME}-${VERSION}.vmb.gz
+${PLUGIN}.vba: ${SOURCE}
+	vim --cmd 'let g:plugin_name="${PLUGIN}"' -s build.vim
 
-${NAME}-${VERSION}.vmb: ${SRC}
-	echo ${SRC} |tr ' ' '\n' > $@.list
-	vim -c "let g:vimball_home='.'" -c "MkVimball! $@" -c "q!" $@.list
-	rm $@.list
-
-${NAME}-${VERSION}.vmb.gz: ${NAME}-${VERSION}.vmb
-	gzip -c ${NAME}-${VERSION}.vmb > $@
+install:
+	rsync -Rv ${SOURCE} ${HOME}/.vim/
 
 clean:
-	-rm ${NAME}-${VERSION}.vmb ${NAME}-${VERSION}.vmb.gz
-
-.PHONY: vimball clean
+	rm ${PLUGIN}.vmb

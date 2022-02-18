@@ -1,7 +1,12 @@
 ```
 :::text
 
-cscope_dynamic.vim
+cscope_auto
+
+cscope_auto was derived from cscope_dynamic.
+It introduced g:file_extensions to custmize your c/c++ file extensions in the
+.vimrc/init.vim. Once got settings completed, forget it. No further
+interactions is necessary.
 
 A Vim plugin that enables very fast automatic cscope database updates for C/C++
 codebases. It accomplishes this by using two cscope databases; a large one, and
@@ -16,14 +21,13 @@ you're often only modifying a subset of files at a time.
 ===============================================================================
 
 1. Installation
-1.1 vimrc changes
-1.2 cscope key maps
+1.1 cscope key maps
+1.2 Dependencies
 2. Configurables
 2.1 Variables
 2.2 Hooks
-3. Tricks 
+3. Tricks
 3.1 Status Line Indicator
-3.2 Re-trigger CursorHold
 4. Compatibility
 5. Development
 6. References
@@ -33,51 +37,79 @@ you're often only modifying a subset of files at a time.
 
 1. Installation
 ===============================================================================
-The plugin is only one file. So you can check out the repository[1][4] and drop
-cscope_dynamic.vim into your ~/.vim/plugin/ directory.
+vim-packager
+
+    function! s:packager_init(plugin_dir, package_manager) abort
+        call packager#add('trailblazing/cscope_auto', { 'type' : 'opt',
+                \ 'requires' : 'trailblazing/boot' })
+    endfunction
+    call s:packager_init(g:plugin_dir['vim'], g:package_manager['vim'])
+
+Or clone the repository[6] into your ~/.vim/pack/*/opt/ directory.
 
 Alternatively you can grab a vimball release from the downloads
-section[1][2][4].  Then install it the standard vimball way.
-
-    $ vim .../cscope_dynamic-<ver>.vmb.gz
+section[1][2][4][9] .  Then install it the standard vimball way.
+    Generate wimball from source
+    $ make
+    Installation
+    vim -b ./cscope_auto.vmb
     :so %
     :q
 
-1.1 vimrc changes
-=======================================
-To init the plugin you can bind a key to the init function. If the cscope
-database already exists (because you've already done init) and you re-launch
-Vim then the plugin will auto initialize.
-
-    nmap <F12> <Plug>CscopeDBInit
-
-1.2 cscope key maps
+1.1 cscope key maps
 =======================================
 The plugin does not provide key maps for searching the database. You should
 also install cscope_maps.vim[5] from the cscope project to get the "default"
 cscope key maps.
 
 
+1.2 Dependencies
+References [7], [8] is the current dependency.
+
 2. Configurables
 ===============================================================================
 
 2.1 Variables
 =======================================
-There are some variables that can be set changes the behavior of
-cscope_dynamic.
+There are some variables that can be set changes the behavior of cscope_auto.
 
-g:cscopedb_big_file          Sets the name and location of the big cscope DB.
+You could custimze the file extensions and g:directory_for_scan in .vimrc.local
+under the current work directory (your project root):
 
-g:cscopedb_small_file        Sets the name and location of the small cscope DB.
+let g:directory_for_scan = ["vinit"]
+let g:directory_for_scan += ["zinit"]
+let g:directory_for_scan += ["tinit"]
 
-g:cscopedb_auto_init         If true, auto init cscope_dynamic if the DB
-                             g:cscopedb_big_file already exists.
+let g:file_extensions = ["*.vim"]
+" let g:file_extensions += ["*.h"]
+" let g:file_extensions += ["*.c"]
+" let g:file_extensions += ["*.H"]
+" let g:file_extensions += ["*.C"]
+" let g:file_extensions += ["*.hh"]
+" let g:file_extensions += ["*.cc"]
+" let g:file_extensions += ["*.h++"]
+" let g:file_extensions += ["*.c++"]
+" let g:file_extensions += ["*.hxx"]
+" let g:file_extensions += ["*.cxx"]
+" let g:file_extensions += ["*.hpp"]
+" let g:file_extensions += ["*.cpp"]
+" let g:file_extensions += ["*.inl"]
+" let g:file_extensions += ["*.impl"]
+let g:file_extensions += ["*.txt"]
+let g:file_extensions += ["*.lua"]
 
-g:cscopedb_extra_files       A file with a list of files for cscope_dynamic to
+g:cscopedb_file_complete     Sets the name and location of the "complete" cscope DB.
+
+g:cscopedb_file_partial      Sets the name and location of the partial cscope DB.
+
+g:cscopedb_auto_init         If true, auto init cscope_auto if the DB
+                             g:cscopedb_file_complete already exists.
+
+g:cscopedb_extra_files       A file with a list of files for cscope_auto to
                              pass to cscope. Can be used to index "out of tree"
                              source code. Or can be used with
                              g:cscopedb_auto_files = 0 if you don't want
-                             cscope_dynamic to automatically find source code.
+                             cscope_auto to automatically find source code.
                              May also be useful if you want to pass absolute
                              path names to cscope.
 
@@ -102,12 +134,15 @@ g:cscopedb_big_min_interval  Minimal interval between big database updates.
                              scenario where you may make changes to many files
                              in a short window.
 
+Actually you are not recommended to define these variables by yourself.
 
 2.2 Hooks
 =======================================
-Users may define functions to get feedback from cscope_dynamic.
+Users may define functions to get feedback from cscope_auto.
 
-Cscope_dynamic_update_hook   Function called by cscope_dynamic when a database
+cscope_auto#setup(function("s:cscope_state"))
+                             User function s:cscope_state(updateing)
+                             called by cscope_auto when a database
                              update begins or ends. Useful for feedback to user.
                              See "Status Line Indicator" example.
                              Argument to function will be true if the plugin
@@ -123,11 +158,7 @@ Cscope_dynamic_update_hook   Function called by cscope_dynamic when a database
 It is useful to have a status line indicator for when the database is updating.
 Below is an example.
 
-    let g:statusline_cscope_flag = ""
-    set statusline=[%n]%<%f\ %h%m%r\ %=\
-    set statusline+=%(\ [%{g:statusline_cscope_flag}]\ \ \ %)
-    set statusline+=%-14.(%l,%c%V%)\ %P
-    function! Cscope_dynamic_update_hook(updating)
+    function! s:cscope_state(updating)
         if a:updating
             let g:statusline_cscope_flag = "C"
         else
@@ -135,24 +166,35 @@ Below is an example.
         endif
         execute "redrawstatus!"
     endfunction
-    call Cscope_dynamic_update_hook(0)
 
-
-3.2 Re-trigger CursorHold
-=======================================
-The plugin triggers off CursorHold events to reset the cscope database. It may
-be beneficial to add a trick[3] to your .vimrc to re-trigger CursorHold.
+    function! s:session_state(updating)
+        if a:updating
+            packadd cscope_auto
+            augroup cscope_auto | au!
+                autocmd BufEnter * :call cscope_auto#setup(function("s:cscope_state"))
+            augroup END
+            let g:statusline_session_flag = "S"
+        else
+            augroup cscope_auto | au!
+            augroup END
+            let g:statusline_session_flag = ""
+        endif
+        execute "redrawstatus!"
+    endfunction
+    augroup session_auto
+        au!
+        autocmd VimEnter * :call session_auto#setup(function("s:session_state"))
+    augroup END
 
 4. Compatibility
 ===============================================================================
-cscope_dynamic uses some shell-isms. Therefore it probably only works on *nix
+cscope_auto uses some shell-isms. Therefore it probably only works on *nix
 machines that have a proper shell. It likely also functions under cygwin.
 
 
 5. Development
 ===============================================================================
-Development is mirrored to both github[4] and bitbucket[1]. Pull requests are
-accepted at either.
+Pull requests are very welcome.
 
 
 6. References
@@ -162,5 +204,9 @@ accepted at either.
 [3] http://vim.wikia.com/wiki/Timer_to_execute_commands_periodically
 [4] https://github.com/erig0/cscope_dynamic
 [5] http://cscope.sourceforge.net/cscope_maps.vim
+[6] https://github.com/trailblazing/cscope_auto
+[7] https://github.com/trailblazing/boot
+[8] https://github.com/trailblazing/session_auto
+[9] https://vim.fandom.com/wiki/Using_VimBall_with_make
 
 ```
