@@ -24,20 +24,22 @@
 " SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-"
 " Vim Plugin to automatically update cscope when a buffer has been written.
 
-if exists("g:cscope_auto_loaded")
-    finish
-endif
+" if exists("g:cscope_auto_loaded")
+"     finish
+" endif
+" let g:cscope_auto_loaded = 1
 
-let s:_init_value = {}
-let s:_init_value._log_address      = $HOME . '/.vim.log'
-let s:_init_value._fixed_tips_width = 27
-let s:_init_value._log_verbose      = 0
-let s:_init_value._is_windows       = 0
-let s:_init_value._script_develop   = 0
-let s:_init_value._log_one_line     = 1
+if ! exists("s:_init_value")
+    let s:_init_value = {}
+    let s:_init_value._log_address      = $HOME . '/.vim.log'
+    let s:_init_value._fixed_tips_width = 27
+    let s:_init_value._log_verbose      = 0
+    let s:_init_value._is_windows       = 0
+    let s:_init_value._script_develop   = 0
+    let s:_init_value._log_one_line     = 1
+endif
 
 if ! exists("g:_cscope_auto_develop")
     let s:_cscope_auto_develop = 0
@@ -53,11 +55,15 @@ if 1 == s:_cscope_auto_develop
     endfunction
 endif
 
-let s:environment = {}
+if ! exists("s:environment")
+    let s:environment = {}
+endif
 
-let s:_environment = boot#environment(s:environment, 'cscope_auto.vim', s:_cscope_auto_develop, s:_init_value)
-" let s:_environment = boot#environment(s:environment, boot#chomped_system('basename ' . resolve(expand('#'. bufnr(). ':p'))),
-"     \ s:_cscope_auto_develop, s:_init_value)
+if ! exists("s:_environment")
+    let s:_environment = boot#environment(s:environment, 'cscope_auto.vim', s:_cscope_auto_develop, s:_init_value)
+    " let s:_environment = boot#environment(s:environment, boot#chomped_system('basename ' . resolve(expand('#'. bufnr(). ':p'))),
+    "     \ s:_cscope_auto_develop, s:_init_value)
+endif
 
 if ! exists("g:_environment")
     let g:_environment  = deepcopy(s:_environment, 1)
@@ -65,29 +71,22 @@ endif
 
 if has("cscope")
 
+if ! exists("s:_csprg")
     let s:_csprg = boot#chomped_system("which cscope")
+endif
 
     " Section: Default variables and Tunables {{{1
-
-
-
-
-    " function! s:initialize_avaiable()
-    "     let src_dirs = []
-    "     if filereadable(expand(s:_db_target._src_dirs_file))
-    "         for path in readfile(expand(s:_db_target._src_dirs_file))
-    "             let src_dirs += [ path ]
-    "         endfor
-    "     endif
-    "     return (exists('s:_db_target._directory_for_scan') && len(s:_db_target._directory_for_scan) > 0 ) || ( len(src_dirs) > 0 )
-    "                 \ && exists('s:_db_target._file_extensions') && len(s:_db_target._file_extensions) > 0
-    " endfunction
-
+if ! exists("s:no_file_exists")
     let s:no_file_exists = 'no_file_exists'
+endif
+if ! exists("s:out_of_date")
     let s:out_of_date    = 'out_of_date'
+endif
+if ! exists("s:updated")
     let s:updated        = 'updated'
+endif
     " let s:linked         = 'linked'
-
+if ! exists("s:status_of_file")
     " let status_of_file = {'link_reseted' : 0, s:out_of_date : 1, s:updated : 2}
     let s:status_of_file = {
         \ s:no_file_exists : 1,
@@ -95,15 +94,9 @@ if has("cscope")
         \ s:updated        : 0,
         \ }
         " \ s:linked         : 0
+endif
 
     function! s:status_of_file_new(_status_dict)
-        " " let object = deepcopy (self, 1)
-        " let object = deepcopy (l:_db_target._status_dict, 1)
-        " let object['link_reseted'] = 0
-        " let object[s:out_of_date] = 0
-        " let object[s:updated] = 0
-        " return object
-        " " return deepcopy(self, 1)
         return deepcopy(a:_status_dict, 1)
     endfunction
 
@@ -131,7 +124,7 @@ if has("cscope")
                 for b in all
                     let l:buf_name = bufname(b)
                     if buflisted(b) && boot#project(l:buf_name, a:_environment) == a:_db_target._status._dir_project
-                        let l:file_name = fnamemodify(resolve(expand("#". b. ":p")), ':p')
+                        let l:file_name = fnamemodify(resolve(expand("#". b . ":p")), ':p')
                         let a:_db_target._status._file_opened[l:file_name] =
                             \ boot#chomped_system('basename ' . a:_db_target._status._dir_project)
                         if getbufvar(b, "&mod")
@@ -162,9 +155,9 @@ if has("cscope")
         endif
         return result
     endfunction
-
+if ! exists("s:status")
     let s:status = {}
-
+endif
     function! s:status.new(
         \ _init_succeeded           = 0
         \, _file_complete_force     = 0
@@ -176,26 +169,20 @@ if has("cscope")
         \, _file_complete           = {}
         \, _file_dict_partial       = {}
         \ )
-        " \, _file_exists_partical    = 0
-        " \, _file_exists_complete    = 0
         " \, _linked_partial          = 0
         " \, _linked_complete         = 0
         let object = deepcopy(self, 1)
         let object._init_succeeded          = a:_init_succeeded
-        " let object._linked_partial          = a:_linked_partial
-        " let object._linked_complete         = a:_linked_complete
         let object._file_complete_force     = a:_file_complete_force
         let object._file_complete_link_time = a:_file_complete_link_time
         let object._ready_to_switch         = a:_ready_to_switch
-        " " File system status
-        " let object._file_exists_partical    = a:_file_exists_partical
-        " " File system status
-        " let object._file_exists_complete    = a:_file_exists_complete
         let object._dir_project             = a:_dir_project
         let object._file_opened             = a:_file_opened
         let object._file_partial            = s:status_of_file_new(s:status_of_file)
         let object._file_complete           = s:status_of_file_new(s:status_of_file)
         let object._file_dict_partial       = deepcopy(a:_file_dict_partial, 1)
+        " let object._linked_partial          = a:_linked_partial
+        " let object._linked_complete         = a:_linked_complete
         return object
     endfunction
 
@@ -203,22 +190,24 @@ if has("cscope")
     " let s:update_description[0] = "Database reseted"
     " let s:update_description[1] = "List file updated"
     " let s:update_description[2] = "Database should be updated"
-
+if ! exists("s:file_system_db_status")
     " File system status
     let s:file_system_db_status = {}
     let s:file_system_db_status[0] = "Error: Database file does not exist"
     let s:file_system_db_status[1] = "Database file created"
-
+endif
+if ! exists("s:vim_db_init_status")
     " Link status
     let s:vim_db_init_status = {}
     let s:vim_db_init_status[0] = "Error: Vim database has not been linked"
     let s:vim_db_init_status[1] = "Vim database has been linked"
-
+endif
+if ! exists("s:vim_cscope_init_status")
     " Initialize status
     let s:vim_cscope_init_status = {}
     let s:vim_cscope_init_status[0] = "Error: Vim database should not have been inited"
     let s:vim_cscope_init_status[1] = "Vim database should have been inited"
-
+endif
     function! s:status.show(_func_name, _enter_state, _environment) dict
         let l:chaged_value = {}
         let l:removed_item = {}
@@ -260,9 +249,9 @@ if has("cscope")
 
     " let s:_status = s:status.new()
 
-
+if ! exists("s:db_target")
     let s:db_target = {}
-
+endif
     function! s:target_settings(_object, _environment)
         let l:func_name = boot#function_name(expand('<SID>'), expand('<sfile>'))
 
@@ -280,7 +269,7 @@ if has("cscope")
         call assert_true(target._status._dir_project != "", "target._status._dir_project should not be \"\"")
 
         if target._status._dir_project == ""
-            call boot#log_silent(l:func_name . '::Eoor::target._status._dir_project ==', target._status._dir_project, a:_environment)
+            call boot#log_silent(l:func_name . '::Error::target._status._dir_project ==', target._status._dir_project, a:_environment)
         endif
 
         if exists("g:cscopedb_file_complete")
@@ -523,32 +512,41 @@ if has("cscope")
         let cmd_complete = target._cmd_for_file_complete()
         call assert_true(cmd_partial != "", "cmd_partial should not be empty")
         call assert_true(cmd_complete != "", "cmd_complete should not be empty")
-        let l:file_status = {}
-        for item in ['partial', 'complete']
-            let l:file_status[item] = s:exclusive(l:func_name, target, item)
-            if l:file_status[item] != s:no_file_exists
-                let result = s:db_link(item, target, a:_environment)
-                if 0 == result
-                    let target._status._init_succeeded = 1
-                endif
-            endif
-        endfor
+
+        " vim-huge reports s:db_link undefined here
+        " let l:file_status = {}
+        " for item in ['partial', 'complete']
+        "     let l:file_status[item] = s:exclusive(l:func_name, target, item)
+        "     if l:file_status[item] != s:no_file_exists
+        "         let result = s:db_link(item, target, a:_environment)
+        "         if 0 == result
+        "             let target._status._init_succeeded = 1
+        "         endif
+        "     endif
+        " endfor
         return target
     endfunction
 
-    " let s:_db_target = s:target_settings(s:db_target, s:_environment)
-    let s:_db_target_list = {}
-    let s:_db_target_list[boot#project(fnamemodify(resolve(expand("#". bufnr(). ":p:h")), ':p:h'), s:_environment)]
-        \ = s:target_settings(s:db_target, s:_environment)
-
-    let s:_project_previos = boot#project(fnamemodify(resolve(expand("#". bufnr(). ":p:h")), ':p:h'), s:_environment)
-    let s:_project_current = boot#project(fnamemodify(resolve(expand("#". bufnr(). ":p:h")), ':p:h'), s:_environment)
+    if ! exists("s:_db_target_list")
+        " let s:_db_target = s:target_settings(s:db_target, s:_environment)
+        let s:_db_target_list = {}
+        let s:_db_target_list[boot#project(fnamemodify(resolve(expand("#". bufnr(). ":p:h")), ':p:h'), s:_environment)]
+            \ = s:target_settings(s:db_target, s:_environment)
+    endif
+    if ! exists("s:_project_previos")
+        let s:_project_previos = boot#project(fnamemodify(resolve(expand("#". bufnr(). ":p:h")), ':p:h'), s:_environment)
+    endif
+    if ! exists("s:_project_current")
+        let s:_project_current = boot#project(fnamemodify(resolve(expand("#". bufnr(). ":p:h")), ':p:h'), s:_environment)
+    endif
 
     " 1}}}
 
     " Section: Internal script variables {{{1
 
-    let s:callback_update_setuped = 0
+    if ! exists("s:callback_update_setuped")
+        let s:callback_update_setuped = 0
+    endif
 
     " Section: Script functions {{{1'
 
@@ -564,17 +562,21 @@ if has("cscope")
         return s:_db_target_list[l:project_dir]
     endfunction
 
-    function! s:generate(_cscope_auto_develop, _environment) abort
+    function! cscope_auto#generate() abort
         let l:func_name = boot#function_name(expand('<SID>'), expand('<sfile>'))
         let result = 1
-        if a:_environment._script_develop  == 1
-            call boot#log_silent("\n", "", a:_environment)
+        if s:_environment._script_develop  == 1
+            call boot#log_silent("\n", "", s:_environment)
         endif
 
-        let l:_db_target = s:check_target(a:_environment)
+        let l:_db_target = s:check_target(s:_environment)
+
+        if 1 == l:_db_target._status._init_succeeded
+            return result
+        endif
 
         let enter_state = deepcopy(l:_db_target._status, 1)
-        "   if((l:git != "") && (l:git != "/"))
+        " if((l:git != "") && (l:git != "/"))
         if "" == l:_db_target._status._dir_project
             return result
         endif
@@ -582,15 +584,15 @@ if has("cscope")
         " " "wrong character '\n'" just for testing typoes :)
         let date = boot#chomped_system("date")
 
-        call boot#log_silent("date", date, a:_environment)
-        call boot#log_silent(l:func_name . "::_dir_project", l:_db_target._status._dir_project, a:_environment)
+        call boot#log_silent("date", date, s:_environment)
+        call boot#log_silent(l:func_name . "::_dir_project", l:_db_target._status._dir_project, s:_environment)
 
-        " call boot#log_silent(l:func_name . "::inner  \$PWD", $PWD, a:_environment)
-        " call boot#log_silent(l:func_name . "::bef cd \%\:p\:h", resolve(expand('%:p:h')), a:_environment)
+        " call boot#log_silent(l:func_name . "::inner  \$PWD", $PWD, s:_environment)
+        " call boot#log_silent(l:func_name . "::bef cd \%\:p\:h", resolve(expand('%:p:h')), s:_environment)
 
 
-        " call boot#log_silent(l:func_name . "::bef cd getcwd", getcwd(), a:_environment)        " Will change
-        " silent! execute '!printf "\ngenerate::outer  \$PWD\t: "$PWD' . ' >> ' . a:_environment._log_address . ' 2>&1 &' |  " Value will change
+        " call boot#log_silent(l:func_name . "::bef cd getcwd", getcwd(), s:_environment)        " Will change
+        " silent! execute '!printf "\ngenerate::outer  \$PWD\t: "$PWD' . ' >> ' . s:_environment._log_address . ' 2>&1 &' |  " Value will change
 
         " " :cd l:_db_target._status._dir_project
         " " execute "!cd " . l:_db_target._status._dir_project
@@ -598,13 +600,13 @@ if has("cscope")
         " " Might change other plugins' behavior
         " " silent! execute "cd " . l:_db_target._status._dir_project
 
-        call boot#log_silent(l:func_name . "::inner  \$PWD", $PWD, a:_environment)                        " never changed
-        call boot#log_silent(l:func_name . "::file   \%\:p\:h", resolve(expand('%:p:h')), a:_environment) " never changed
+        call boot#log_silent(l:func_name . "::inner  \$PWD", $PWD, s:_environment)                        " never changed
+        call boot#log_silent(l:func_name . "::file   \%\:p\:h", resolve(expand('%:p:h')), s:_environment) " never changed
 
-        call boot#log_silent(l:func_name . "::getcwd", getcwd(), a:_environment)                   " changed
-        silent! execute '!printf "\ngenerate::outer  \$PWD\t: "$PWD' . ' >> ' . a:_environment._log_address . ' 2>&1 &' |  " Value changed
+        call boot#log_silent(l:func_name . "::getcwd", getcwd(), s:_environment)                   " changed
+        silent! execute '!printf "\ngenerate::outer  \$PWD\t: "$PWD' . ' >> ' . s:_environment._log_address . ' 2>&1 &' |  " Value changed
 
-        if(a:_environment._is_windows == 1)
+        if(s:_environment._is_windows == 1)
             let l:tags   = l:_db_target._status._dir_project. "\\". "tags"
             let l:csfile = l:_db_target._status._dir_project. "\\". "cscope.files"
             let l:csout  = l:_db_target._status._dir_project. "\\". "cscope.out"
@@ -614,9 +616,9 @@ if has("cscope")
             let l:csout  = l:_db_target._status._dir_project. "/cscope.out"
         endif
 
-        call boot#log_silent(l:func_name . "::l:tags", l:tags, a:_environment)
-        call boot#log_silent(l:func_name . "::l:csfile", l:csfile, a:_environment)
-        call boot#log_silent(l:func_name . "::l:csout", l:csout, a:_environment)
+        call boot#log_silent(l:func_name . "::l:tags", l:tags, s:_environment)
+        call boot#log_silent(l:func_name . "::l:csfile", l:csfile, s:_environment)
+        call boot#log_silent(l:func_name . "::l:csout", l:csout, s:_environment)
 
         if filereadable(l:tags)
             let tags_deleted     = delete(l:tags)
@@ -626,19 +628,19 @@ if has("cscope")
             endif
         endif
 
-        if 1 == a:_cscope_auto_develop
+        if 1 == s:_cscope_auto_develop
             if has("cscope") && filereadable(s:_csprg)
                 silent! execute "cs kill -1"
             endif
 
-            " call s:file_remove_if_exists(l:lock_file, a:_environment)
-            call s:file_remove_if_exists(l:csfile, a:_environment)
-            call s:file_remove_if_exists(l:csout, a:_environment)
-        endif | " 1 == a:cscope_auto_develop
+            " call s:file_remove_if_exists(l:lock_file, s:_environment)
+            call s:file_remove_if_exists(l:csfile, s:_environment)
+            call s:file_remove_if_exists(l:csout, s:_environment)
+        endif
 
         if(executable('ctags'))
             " silent! execute "!ctags -R --c-types=+p --fields=+S *"
-            silent! execute "!(ctags -R --c++-kinds=+p --fields=+iaS --extras=+q .  &) > /dev/null"
+            silent! execute "!(ctags -R --c++-kinds=+p --fields=+iaS --extras=+q ". l:_db_target._status._dir_project ." &) > /dev/null"
         endif
 
         if ! (executable('cscope') && has("cscope") && filereadable(s:_csprg))
@@ -646,12 +648,13 @@ if has("cscope")
         endif
 
         let l:_db_target._status._file_complete_force = 1
-        :call s:reset(l:_db_target, a:_environment)
+        :call s:reset(l:_db_target, s:_environment)
 
-        if 1 == a:_cscope_auto_develop
+        if 1 == s:_cscope_auto_develop
             return result
         endif
-        if(a:_environment._is_windows != 1)
+
+        if(s:_environment._is_windows != 1)
             let file_types = " -name \'". l:_db_target._file_extensions[0] . "\'"
         else
             let file_types = " ". l:_db_target._file_extensions[0]
@@ -659,12 +662,12 @@ if has("cscope")
         let il_count=0
         for il in l:_db_target._file_extensions
             if (10 > il_count)
-                call boot#log_silent("l:_db_target._file_extensions[ 0" . il_count . " ]", il, a:_environment)
+                call boot#log_silent("l:_db_target._file_extensions[ 0" . il_count . " ]", il, s:_environment)
             else
-                call boot#log_silent("l:_db_target._file_extensions[ " . il_count . " ]", il, a:_environment)
+                call boot#log_silent("l:_db_target._file_extensions[ " . il_count . " ]", il, s:_environment)
             endif
             if ( 0 < il_count)
-                if(a:_environment._is_windows != 1)
+                if(s:_environment._is_windows != 1)
                     let file_types .= " -o -name \'" . il  . "\'"
                 else
                     let file_types .= "," . il
@@ -673,36 +676,36 @@ if has("cscope")
             let il_count+=1
         endfor
 
-        call boot#log_silent("\n", "", a:_environment)
-        call boot#log_silent(l:func_name . "::file_types", file_types, a:_environment)
-        call boot#log_silent("\n", "", a:_environment)
+        call boot#log_silent("\n", "", s:_environment)
+        call boot#log_silent(l:func_name . "::file_types", file_types, s:_environment)
+        call boot#log_silent("\n", "", s:_environment)
 
-        if a:_environment._is_windows != 1
+        if s:_environment._is_windows != 1
             " echom l:func_name . '::find: ' . '!(set -f; find . -type f -and  ' . file_types . ' | cat - | xargs realpath --relative-to=$(pwd) > cscope.files) '
             " exe '!(printf l:func_name . "::find: (set -f; find . -type f -and  ' . file_types . ' | cat -
-            "             \ | xargs realpath --relative-to=$(pwd) > cscope.files)" >> '. a:_environment._log_address . ' 2>&1)'
+            "             \ | xargs realpath --relative-to=$(pwd) > cscope.files)" >> '. s:_environment._log_address . ' 2>&1)'
             call boot#log_silent(l:func_name . "::find", '!(set -f; find . -type f -and \(' . file_types . ' \) 2>/dev/null
-                \ | cat - | xargs realpath --relative-to=$(pwd) > cscope.files) &>/dev/null', a:_environment)
-            call boot#log_silent("\n", "", a:_environment)
+                \ | cat - | xargs realpath --relative-to=$(pwd) > cscope.files) &>/dev/null', s:_environment)
+            call boot#log_silent("\n", "", s:_environment)
             " silent! execute "!find . -name '*.h' -o -name '*.c' -o -name '*.cpp' -o -name '*.java' -o -name '*.cs' -o -name
             "             \ '*.cxx' -o -name '*.hxx' -o -name '*.inl' -o -name '*.impl' | xargs realpath > cscope.files"
-            silent! execute '!(set -f; find . -type f -and \(' . file_types .
-                \ ' \) 2>/dev/null | cat - | xargs realpath --relative-to=$(pwd) > cscope.files) &>/dev/null'
+            silent! execute '!(set -f; find '. l:_db_target._status._dir_project .' -type f -and \(' . file_types .
+                \ ' \) 2>/dev/null | cat - | xargs realpath > cscope.files) &>/dev/null'
         else
-            call boot#log_silent(l:func_name . "::find", "!(dir /s/b " . file_types . " >> cscope.files) &>/dev/null ", a:_environment)
-            call boot#log_silent("\n", "", a:_environment)
+            call boot#log_silent(l:func_name . "::find", "!(dir /s/b " . file_types . " >> cscope.files) &>/dev/null ", s:_environment)
+            call boot#log_silent("\n", "", s:_environment)
             " silent! execute "!(dir /s/b *.c,*.cpp,*.h,*.java,*.cs >> cscope.files &>/dev/null &)"
             silent! execute "!(dir /s/b " . file_types . " >> cscope.files) &>/dev/null"
         endif
 
         if filereadable("cscope.files")
-            call boot#log_silent(l:func_name . "::!cscope", "!nice cscope -Rbkq -u -i cscope.files -f cscope.out &>/dev/null", a:_environment)
-            call boot#log_silent("\n", "", a:_environment)
+            call boot#log_silent(l:func_name . "::!cscope", "!nice cscope -Rbkq -u -i cscope.files -f cscope.out &>/dev/null", s:_environment)
+            call boot#log_silent("\n", "", s:_environment)
             " silent! execute "!cscope -b" "   silent! execute "!cscope -Rbq "
             silent! execute "!nice cscope -Rbkq -u -i cscope.files -f cscope.out &>/dev/null"
         elseif filereadable(l:csfile)
-            call boot#log_silent(l:func_name . "::!cscope", "!cscope -Rbkq -i ". l:csfile . " -f " . l:csfile . " &>/dev/null", a:_environment)
-            call boot#log_silent("\n", "", a:_environment)
+            call boot#log_silent(l:func_name . "::!cscope", "!cscope -Rbkq -i ". l:csfile . " -f " . l:csfile . " &>/dev/null", s:_environment)
+            call boot#log_silent("\n", "", s:_environment)
             silent! execute "!cscope -Rbkq -u -i ". l:csfile . " -f " . l:csfile . " &>/dev/null"
         else
             echohl WarningMsg | echo "Fail to read cscope.files!" | echohl None
@@ -713,14 +716,15 @@ if has("cscope")
         silent! execute "normal :"
 
         if filereadable("cscope.out")
-            call boot#log_silent(l:func_name . "::cs add", "cs add cscope.out " . l:_db_target._status._dir_project . " &>/dev/null ", a:_environment)
-            call boot#log_silent("\n", "", a:_environment)
+            call boot#log_silent(l:func_name . "::cs add", "cs add cscope.out " .
+                \ l:_db_target._status._dir_project . " &>/dev/null ", s:_environment)
+            call boot#log_silent("\n", "", s:_environment)
             " :call job_start("cs add cscope.out")
             " :cs add cscope.out
             silent! execute "cs add cscope.out " . l:_db_target._status._dir_project
         elseif filereadable(l:csout)
-            call boot#log_silent(l:func_name . "::cs add", "cs add " . l:csout . ' ' . l:_db_target._status._dir_project, a:_environment)
-            call boot#log_silent("\n", "", a:_environment)
+            call boot#log_silent(l:func_name . "::cs add", "cs add " . l:csout . ' ' . l:_db_target._status._dir_project, s:_environment)
+            call boot#log_silent("\n", "", s:_environment)
             " :call job_start("cs add " . l:csout . ' ' . l:_db_target._status._dir_project)
             silent! execute "cs add " . l:csout . ' ' . l:_db_target._status._dir_project
             " :cs show
@@ -739,10 +743,10 @@ if has("cscope")
 
 
         let result = 0
-        call l:_db_target._status.show(l:func_name, enter_state, a:_environment)
-        if a:_environment._script_develop  == 1 &&result == 0
-            call boot#log_silent(l:func_name, "done", a:_environment)
-            call boot#log_silent("\n", "", a:_environment)
+        call l:_db_target._status.show(l:func_name, enter_state, s:_environment)
+        if s:_environment._script_develop  == 1 &&result == 0
+            call boot#log_silent(l:func_name, "done", s:_environment)
+            call boot#log_silent("\n", "", s:_environment)
         endif
         return result
     endfunction
@@ -766,7 +770,8 @@ if has("cscope")
         " breaks the tag stack for some reason.
         " echom l:func_name . "::cmd: " . a:cmd
         " call boot#log_silent("\n", "", a:_environment)
-        " silent! execute '!(printf "' . l:func_name . '::cmd\t: ' . a:cmd .'")' . ' >> ' . a:_environment._log_address . ' 2>&1 &'
+        " silent! execute '!(printf "' . l:func_name . '::cmd\t: ' .
+        "     \ a:cmd .'")' . ' >> ' . a:_environment._log_address . ' 2>&1 &'
 
         " call boot#log_silent("\n", "", a:_environment)
         call boot#log_silent(l:func_name . "::cmd", a:cmd, a:_environment)
@@ -807,7 +812,8 @@ if has("cscope")
 
         let l:_db_target = s:check_target(a:_environment)
 
-        let l:caller_info = {'func_name': l:func_name, 'result': 1, 'enter_state': deepcopy(l:_db_target._status, 1)}
+        let l:caller_info = {'func_name': l:func_name, 'result': 1,
+            \ 'enter_state': deepcopy(l:_db_target._status, 1)}
 
         " let l:_db_target._status._file_partial[s:out_of_date] = 1
         call s:exclusive(l:func_name, l:_db_target, "partial", s:out_of_date, a:_environment)
@@ -816,10 +822,14 @@ if has("cscope")
         " we don't end up with duplicate lookups.
         if l:_db_target._resolve_links
             " let path = fnamemodify(resolve(expand(a:_file)), ":p:.")
-            let path = fnamemodify(resolve(expand(a:_file)), ":p")
+            " E944: Reverse range in character class
+            " let path = fnameescape(fnamemodify(resolve(expand(a:_file)), ":p"))
+            let path = fnameescape(fnamemodify(resolve(expand("#". bufnr(). ":p")), ':p'))
         else
             " let path = fnamemodify(expand(a:_file), ":p:.")
-            let path = fnamemodify(expand(a:_file), ":p")
+            " E944: Reverse range in character class
+            " let path = fnameescape(fnamemodify(expand(a:_file), ":p"))
+            let path = fnameescape(fnamemodify(expand("#". bufnr(). ":p"), ':p'))
         endif
 
         " call boot#log_silent(l:func_name, path, a:_environment)
@@ -832,7 +842,8 @@ if has("cscope")
             let l:_db_target._status._file_dict_partial[path] = 1
             " let l:_db_target._status._file_complete[s:out_of_date] = 1
             call s:exclusive(l:func_name, l:_db_target, 'complete', s:out_of_date, a:_environment)
-            call writefile(keys(l:_db_target._status._file_dict_partial), expand(l:_db_target._file_partial) . ".files")
+            call writefile(keys(l:_db_target._status._file_dict_partial),
+                \ expand(l:_db_target._file_partial) . ".files")
         endif
 
         for [key, value] in items(l:_db_target._status._file_dict_partial)
@@ -866,7 +877,8 @@ if has("cscope")
             " let l:_db_target._status._ready_to_switch = 0
             let index = 0
 
-            call boot#log_silent(l:func_name . "::execute('cs show').split() to a list", l:link_list, a:_environment)
+            call boot#log_silent(l:func_name . "::execute('cs show').split()
+                \ to a list", l:link_list, a:_environment)
             let l:db_filename = eval('a:_db_target._file_' . a:_file_type)
             for item in l:link_list
                 if item =~? l:db_filename
@@ -881,7 +893,8 @@ if has("cscope")
             " call boot#log_silent(l:func_name . "::linked file_name at index 0", file_name, a:_environment)
 
         elseif type(l:link_list) == v:t_string && l:link_list =~ '.cscope'
-            call boot#log_silent(l:func_name . "::execute('cs show').split() is not a list", l:link_list, a:_environment)
+            call boot#log_silent(l:func_name . "::execute('cs show').split()
+                \ is not a list", l:link_list, a:_environment)
             let l:db_filename = eval('a:_db_target._file_' . a:_file_type)
             if l:link_list =~? l:db_filename
                 call boot#log_silent(l:func_name . "::l:db_filename", l:db_filename, a:_environment)
@@ -912,7 +925,8 @@ if has("cscope")
             endif
             if filereadable(eval('V._file_' . a:_file_type)) && key != l:_db_target._status._dir_project
                 " if eval('V._status._linked_' . a:_file_type) == 1 && key != l:_db_target._status._dir_project
-                call assert_true(! (V is a:_db_target), "If you saw this, it means that deep copy has not made things work")
+                call assert_true(! (V is a:_db_target), "If you saw this,
+                    \ it means that deep copy has not made things work")
                 " silent! execute 'cs kill ' . V._file_complete
                 call s:db_break(a:_file_type, V, a:_environment)
             endif
@@ -928,9 +942,14 @@ if has("cscope")
 
         " silent execute "cs add " . l:_db_target._file_partial
         call boot#log_silent(l:func_name . "::"
-            \, "cs add " . eval('l:_db_target._file_' . a:_file_type) . ' ' . l:_db_target._status._dir_project, a:_environment)
-        " silent! execute "( cs add " . eval('l:_db_target._file_' . a:_file_type) . ' ' . l:_db_target._status._dir_project . " ) &>/dev/null &"
-        silent! execute "cs add " . eval('l:_db_target._file_' . a:_file_type) . ' ' . l:_db_target._status._dir_project
+            \, "cs add " . eval('l:_db_target._file_' . a:_file_type) .
+            \ ' ' . l:_db_target._status._dir_project, a:_environment)
+
+        " silent! execute "( cs add " . eval('l:_db_target._file_' . a:_file_type) .
+        "     \ ' ' . l:_db_target._status._dir_project . " ) &>/dev/null &"
+
+        silent! execute "cs add " . eval('l:_db_target._file_' . a:_file_type) .
+            \ ' ' . l:_db_target._status._dir_project
 
         let db_result = s:read_link_status(a:_db_target, a:_file_type, a:_environment)
         if "" == db_result
@@ -1013,7 +1032,8 @@ if has("cscope")
                 call boot#log_silent(l:func_name . '::',
                     \ '(cs add ' . eval('l:_db_target._file_' . item) . ' ' .
                     \ l:_db_target._status._dir_project . ') &>/dev/null &', a:_environment)
-                " silent! execute "(cs add " . l:_db_target._file_partial . ' ' . l:_db_target._status._dir_project . " ) &>/dev/null &"
+                " silent! execute "(cs add " . l:_db_target._file_partial .
+                "     \ ' ' . l:_db_target._status._dir_project . " ) &>/dev/null &"
                 " let l:_db_target._status._linked_partial = 1
                 let result = s:db_link(item, l:_db_target, a:_environment)
             else
@@ -1124,7 +1144,8 @@ if has("cscope")
             call boot#log_silent(l:func_name . "::l:update_time_not_arrived", l:update_time_not_arrived, a:_environment)
         else
             call s:file_remove_if_exists(l:_db_target._lock_file, a:_environment)
-            call boot#log_silent(l:func_name . "::unlock " . l:_db_target._lock_file, ! filereadable(expand(l:_db_target._lock_file)), a:_environment)
+            call boot#log_silent(l:func_name . "::unlock " . l:_db_target._lock_file,
+                \ ! filereadable(expand(l:_db_target._lock_file)), a:_environment)
             " let l:_db_target._status._file_complete_force = 1
             let _next_step_available = 1
         endif
@@ -1145,7 +1166,8 @@ if has("cscope")
             " if s:exclusive(l:func_name, l:_db_target, 'partial') == s:updated
             "     \ && s:exclusive(l:func_name, l:_db_target, 'complete') == s:out_of_date
             if s:exclusive(l:func_name, l:_db_target, 'complete') == s:updated
-                " let l:update_time_not_arrived = localtime() < l:_db_target._status._file_complete_link_time + l:_db_target._complete_min_interval
+                " let l:update_time_not_arrived = localtime() < l:_db_target._status._file_complete_link_time
+                    \ + l:_db_target._complete_min_interval
                 let _db_needs_update = s:try_unlock(l:_db_target, a:_environment)
                 " let l:update_time_not_arrived = localtime() <
                 "             \ boot#chomped_system("stat -L -c '%Y' '" . l:_db_target._file_complete . "'")
@@ -1166,11 +1188,14 @@ if has("cscope")
             " let l:dir  = boot#project(a:_environment)
             call boot#log_silent(l:func_name . "::_dir_project", l:_db_target._status._dir_project, a:_environment)
             call boot#log_silent(l:func_name . "::getcwd()", getcwd(), a:_environment)
-            call boot#log_silent(l:func_name . "::resolve(expand(l:_db_target._lock_file))", resolve(expand(l:_db_target._lock_file)), a:_environment)
+            call boot#log_silent(l:func_name . "::resolve(expand(l:_db_target._lock_file))",
+                \ resolve(expand(l:_db_target._lock_file)), a:_environment)
             call boot#log_silent(l:func_name . "::filereadable(expand(l:_db_target._lock_file))",
                 \ filereadable(expand(l:_db_target._lock_file)), a:_environment)
-            call boot#log_silent(l:func_name . "::db_update is still working with the holding of l:_db_target._lock_file", l:_db_target._lock_file, a:_environment)
-            call boot#log_silent(l:func_name . "::db_update is still working with the holding of resolve(expand(l:_db_target._lock_file))", resolve(expand(l:_db_target._lock_file)), a:_environment)
+            call boot#log_silent(l:func_name . "::db_update is still working with the holding of l:_db_target._lock_file",
+                \ l:_db_target._lock_file, a:_environment)
+            call boot#log_silent(l:func_name . "::db_update is still working with the holding of
+                \ resolve(expand(l:_db_target._lock_file))", resolve(expand(l:_db_target._lock_file)), a:_environment)
             " let enter_state = deepcopy(l:_db_target._status, 1)
             " call s:reset_force(a:file_extensions, l:_db_target._status, a:_environment)
             " call l:_db_target._status.show(l:func_name, enter_state, a:_environment)
@@ -1396,7 +1421,8 @@ if has("cscope")
         let l:_db_target = a:_db_target
         call assert_true(l:_db_target is a:_db_target, "l:_db_target is a:_db_target should be True")
         if ! (l:_db_target is a:_db_target)
-            call boot#log_silent(l:func_name . "::Error::! (l:_db_target is a:_db_target)", ! (l:_db_target is a:_db_target), a:_environment)
+            call boot#log_silent(l:func_name . "::Error::! (l:_db_target is a:_db_target)",
+                \ ! (l:_db_target is a:_db_target), a:_environment)
         endif
         if a:_environment._script_develop  == 1
             call boot#log_silent("\n", "", a:_environment)
@@ -1415,7 +1441,8 @@ if has("cscope")
                     " silent execute "cs add " . l:_db_target._file_complete
                     call boot#log_silent("init::", "(cs add " . eval('l:_db_target._file_' . item) .
                         \ ' ' . l:_db_target._status._dir_project . " ) &>/dev/null &", a:_environment)
-                    " silent! execute "(cs add " . l:_db_target._file_complete . ' ' . l:_db_target._status._dir_project . " ) &>/dev/null &"
+                    " silent! execute "(cs add " . l:_db_target._file_complete .
+                    "     \ ' ' . l:_db_target._status._dir_project . " ) &>/dev/null &"
                     " let l:_db_target._status._linked_complete = 1
                     call s:db_link(item, l:_db_target, a:_environment)
                 endif
@@ -1443,41 +1470,45 @@ if has("cscope")
     endfunction
 
     " Force full update of DB {{{2
-    function! s:reset_force(_environment)
+
+    function! cscope_auto#reset_force()
         let l:func_name = boot#function_name(expand('<SID>'), expand('<sfile>'))
         let result = 1
         " if s:initialize_avaiable()
-        let l:_db_target = s:check_target(a:_environment)
+        let l:_db_target = s:check_target(s:_environment)
 
-        if a:_environment._script_develop  == 1
-            call boot#log_silent("\n", "", a:_environment)
-            " call boot#log_silent(l:func_name . "::boot" . shellescape('#', 1) . "project(resolve(expand(" . shellescape('#', 1) . " . bufnr() . ':p:h')), a:_environment)",
+        if s:_environment._script_develop  == 1
+            call boot#log_silent("\n", "", s:_environment)
+            " call boot#log_silent(l:func_name . "::boot" . shellescape('#', 1) .
+            "     \ "project(resolve(expand(" . shellescape('#', 1) . " . bufnr() . ':p:h')), a:_environment)",
             "     \ boot#project(resolve(expand('#'. bufnr(). ':p:h')), a:_environment), a:_environment)
             call boot#log_silent(l:func_name . '::boot\#project(resolve(expand(' . shellescape('#', 1) .
                 \ ' . bufnr() . ' . shellescape(':p:h', 1) . ')), a:_environment)',
-                \ boot#project(resolve(expand('#'. bufnr(). ':p:h')), a:_environment), a:_environment)
-            call boot#log_silent(l:func_name . "::l:_db_target._status._dir_project", l:_db_target._status._dir_project, a:_environment)
+                \ boot#project(resolve(expand('#'. bufnr(). ':p:h')), s:_environment), s:_environment)
+            call boot#log_silent(l:func_name . "::l:_db_target._status._dir_project",
+                \ l:_db_target._status._dir_project, s:_environment)
         endif
         let enter_state = deepcopy(l:_db_target._status, 1)
-
 
         if "" != l:_db_target._status._dir_project
             " let l:lock_file = s:_db_target._lock_file
             let l:_db_target._status._file_complete_force = 1
-            let result = s:reset(l:_db_target, a:_environment)
+            let result = s:reset(l:_db_target, s:_environment)
         endif
 
-        call l:_db_target._status.show(l:func_name, enter_state, a:_environment)
+        call l:_db_target._status.show(l:func_name, enter_state, s:_environment)
 
-        if a:_environment._script_develop  == 1 && result == 0
-            call boot#log_silent(l:func_name, "done", a:_environment)
-            call boot#log_silent("\n", "", a:_environment)
+        if s:_environment._script_develop  == 1 && result == 0
+            call boot#log_silent(l:func_name, "done", s:_environment)
+            call boot#log_silent("\n", "", s:_environment)
         endif
         " else
-        "     call boot#log_silent(l:func_name . "s:initialize_avaiable()", s:initialize_avaiable(), a:_environment)
+        "     call boot#log_silent(l:func_name . "s:initialize_avaiable()", s:initialize_avaiable(), s:_environment)
         " endif
         return result
     endfunction
+
+    " 2}}}
 
     function! s:on_bufwritepost(_environment)
         let l:func_name = boot#function_name(expand('<SID>'), expand('<sfile>'))
@@ -1491,7 +1522,8 @@ if has("cscope")
             call boot#log_silent(l:func_name . "s:exclusive(l:func_name, l:_db_target, 'partial')",
                 \ s:exclusive(l:func_name, l:_db_target, 'partial'), a:_environment)
         endif
-        let l:caller_info = {'func_name': l:func_name, 'result': 1, 'enter_state': deepcopy(l:_db_target._status, 1)}
+        let l:caller_info = {'func_name': l:func_name, 'result': 1,
+            \ 'enter_state': deepcopy(l:_db_target._status, 1)}
         let l:result = s:update_pre(l:caller_info, a:_environment)
         for item in l:result
             call s:db_update(l:caller_info, item, a:_environment)
@@ -1505,22 +1537,30 @@ if has("cscope")
         if s:_project_previos == l:_db_target._status._dir_project
             return
         endif
+        if bufname('%') =~? "buffergator"
+            return
+        endif
         if ! boot#is_writable(winnr())
             return
         endif
         if l:_db_target._status._init_succeeded == 0
 
-            call assert_true(l:_db_target._status._dir_project != "", "l:_db_target._status._dir_project should not be \"\"")
+            call assert_true(l:_db_target._status._dir_project != "",
+                \ "l:_db_target._status._dir_project should not be \"\"")
             if l:_db_target._status._dir_project == ""
-                call boot#log_silent(l:func_name . '::Eoor::l:_db_target._status._dir_project ==', l:_db_target._status._dir_project, a:_environment)
+                call boot#log_silent(l:func_name . '::Error::l:_db_target._status._dir_project ==',
+                    \ l:_db_target._status._dir_project, a:_environment)
             endif
 
-            " recursive calling
+            let l:_db_target._status._file_complete_force = 1
+            " might be recursively called
             call s:reset(l:_db_target, a:_environment)
 
-            call assert_true(l:_db_target._status._init_succeeded == 1, "l:_db_target._status._init_succeeded should not be 0")
+            call assert_true(l:_db_target._status._init_succeeded == 1,
+                \ "l:_db_target._status._init_succeeded should not be 0")
             if l:_db_target._status._init_succeeded == 0
-                call boot#log_silent(l:func_name . '::Eoor::l:_db_target._status._init_succeeded ==', l:_db_target._status._init_succeeded, a:_environment)
+                call boot#log_silent(l:func_name . '::Error::l:_db_target._status._init_succeeded ==',
+                    \ l:_db_target._status._init_succeeded, a:_environment)
             endif
 
             " for item in ['partial', 'complete']
@@ -1529,6 +1569,7 @@ if has("cscope")
             "         break
             "     endif
             " endfor
+
         else
             call s:file_dict_update({'func_name': l:func_name, 'result': 1, 'enter_state':
                 \ deepcopy(l:_db_target._status, 1)},
@@ -1538,10 +1579,11 @@ if has("cscope")
     endfunction
 
     " Section: Autocommands {{{1
-    function! s:au_install(_environment)
+
+    function! cscope_auto#au_install()
         let l:func_name = boot#function_name(expand('<SID>'), expand('<sfile>'))
-        if a:_environment._script_develop  == 1
-            call boot#log_silent("\n", "", a:_environment)
+        if s:_environment._script_develop  == 1
+            call boot#log_silent("\n", "", s:_environment)
         endif
         augroup cscopedb_augroup
             au!
@@ -1555,59 +1597,23 @@ if has("cscope")
             " au QuickFixCmdPre,CursorHoldI,CursorHold,WinEnter,CursorMoved,CursorMovedI *
             " au QuickFixCmdPre,CursorHoldI,CursorHold *
             au QuickFixCmdPre * call s:db_tick(s:_environment)
-            au WinEnter,BufEnter * call s:on_bufswitch(s:_environment)
+            au BufEnter,BufWinEnter,BufNew * call s:on_bufswitch(s:_environment)
         augroup END
 
-        if a:_environment._script_develop  == 1
-            call boot#log_silent(l:func_name, "done", a:_environment)
-            call boot#log_silent("\n", "", a:_environment)
+        if s:_environment._script_develop  == 1
+            call boot#log_silent(l:func_name, "done", s:_environment)
+            call boot#log_silent("\n", "", s:_environment)
         endif
     endfunction
+
     " 1}}}
 
     " Autoinit: {{{1
-    " If complete cscope DB exists then automatically init the plugin.
-    " Means we launch vim from a location that we've already started using
-    " the plugin from.
-
-    " call boot#log_silent("values(s:_db_target_list)[0]._auto_init", values(s:_db_target_list)[0]._auto_init, s:_environment)
-
-    " if values(s:_db_target_list)[0]._auto_init
-        " call boot#log_silent("values(s:_db_target_list)[0]._status._init_succeeded", values(s:_db_target_list)[0]._status._init_succeeded, s:_environment)
-
-        " if 0 == values(s:_db_target_list)[0]._status._init_succeeded
-            " The first time cscope_auto.vim loaded, l:_db_target._status._dir_project is ""
-            call s:au_install(s:_environment)
-            " call s:reset_force(s:_environment)
-        " endif
-        if 1 == s:_cscope_auto_develop
-            " if 0 == values(s:_db_target_list)[0]._status._init_succeeded
-                call s:generate(s:_cscope_auto_develop, s:_environment)
-            " endif
-            augroup cscopedb_auto
-                au!
-                " au QuickFixCmdPre,CursorHoldI,CursorHold,WinEnter,CursorMoved *
-                au QuickFixCmdPre,BufWritePost,WinEnter *
-                    \ if 0 == values(s:_db_target_list)[0]._status._init_succeeded |
-                    \ call s:generate(s:_cscope_auto_develop, s:_environment) |
-                    \ endif
-            augroup END
-        endif
-    " endif
-
     " 1}}}
 
     " Section: Maps {{{1
-    if ! exists("g:cscope_auto_loaded")
-        " Script scope variables won't work, ignore this design
-        " noremap <unique> <Plug>CscopeInit :call <sid>init_force(<f-args>)<cr>
-        if 1 == s:_cscope_auto_develop
-            noremap <unique> <Plug>CG :call <sid>generate(g:_file_extensions, g:_cscope_auto_develop, g:_status, g:_environment)<cr>
-        endif
-        command! -nargs=0 CS :call s:reset_force(s:_environment)
-        let g:cscope_auto_loaded = 1
-        call boot#log_silent("g:cscope_auto_loaded::autoload", g:cscope_auto_loaded, s:_environment)
-    endif
+
+
     " 1}}}
 
 endif

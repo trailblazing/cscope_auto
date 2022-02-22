@@ -24,62 +24,49 @@
 " SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-"
 " Vim Plugin to automatically update cscope when a buffer has been written.
-"
+
+if ! exists("g:_cscope_auto_develop")
+    let s:_cscope_auto_develop = 0
+    let g:_cscope_auto_develop = 0
+else
+    let s:_cscope_auto_develop = g:_cscope_auto_develop
+endif
+
 if has("cscope")
     if exists("g:cscope_auto_loaded")
         finish
     endif
 
-    if ! exists("g:_cscope_out_debug")
-        let s:_cscope_out_debug  = 0
-    else
-        let s:_cscope_out_debug = g:_cscope_out_debug
-    endif
 
     " Autoinit: {{{1
-    " " If big cscope DB exists then automatically init the plugin.
-    " " Means we launch vim from a location that we've already started using
-    " " the plugin from.
-    " if s:auto_init
-    "     " if filereadable(expand(s:big_file))
-    "     if 0 == s:_init_succeeded
-    "         call s:init(s:_status, s:_lock_file, g:file_extensions, g:_environment)
-    "     endif
-    "     if 1 == s:_cscope_out_debug
-    "         if 0 == s:_init_succeeded
-    "             call s:generate( s:_status, g:file_extensions, g:_environment)
-    "         endif
-    "     endif
-    " endif
 
-    " if 1 == s:_cscope_out_debug
-    "     augroup cscopedb_auto
-    "         au!
-    "         " au QuickFixCmdPre,CursorHoldI,CursorHold,WinEnter,CursorMoved *
-    "         au QuickFixCmdPre,CursorHoldI,CursorHold,WinEnter *
-    "                     \ if 0 == s:_init_succeeded |
-    "                     \ call s:generate( s:_status, g:file_extensions, g:_environment) |
-    "                     \ endif
-    "     augroup END
-    " endif
+    " If complete cscope DB exists then automatically init the plugin.
+    " Means we launch vim from a location that we've already started using
+    " the plugin from.
 
-    augroup cscope_auto_force
-        au!
-        autocmd VimEnter * exec 'normal \<Plugin>CscopeDBInit'
-    augroup END
+    " The first time cscope_auto.vim loaded, l:_db_target._status._dir_project is ""
+    call cscope_auto#au_install()
+    " call cscope_auto#reset_force()
+
     " 1}}}
 
     " Section: Maps {{{1
-    " if ! exists("g:cscope_auto_loaded")
-    " Script scope variables won't work, ignore this design
-    " noremap <unique> <Plug>CscopeDBInit :call <SID>init_force(s:_status, g:file_extensions, g:_environment)<CR>
-    " " noremap <unique> <Plug>CscopeDBInit :call <SID>generate(s:_status, g:file_extensions, g:_environment)<CR>
-    " let g:cscope_auto_loaded = 1
-    " call boot#log_silent("g:cscope_auto_loaded::plugin", g:cscope_auto_loaded, g:_environment)
-    " endif
+
+    if ! exists("g:cscope_auto_loaded")
+
+        " noremap <unique> <Plug>CscopeInit :call <sid>init_force(<f-args>)<cr>
+        if 1 == s:_cscope_auto_develop
+            noremap <unique> <Plug>CG :call cscope_auto#generate()<cr>
+        endif
+        command! -nargs=0 CS :call cscope_auto#reset_force()
+
+        let g:cscope_auto_loaded = 1
+        call boot#log_silent("g:cscope_auto_loaded", g:cscope_auto_loaded, g:_environment)
+    endif
+
     " 1}}}
+
 endif    " has("cscope")
 
 
