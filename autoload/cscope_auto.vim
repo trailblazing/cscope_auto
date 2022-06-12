@@ -61,8 +61,8 @@ endif
 
 if ! exists("s:_environment")
     let s:_environment = boot#environment(s:environment, 'cscope_auto.vim', s:_cscope_auto_develop, s:_init_value)
-    " let s:_environment = boot#environment(s:environment, boot#chomped_system('basename ' . resolve(expand('#'. bufnr(). ':p'))),
-    "     \ s:_cscope_auto_develop, s:_init_value)
+    " let s:_environment = boot#environment(s:environment, boot#chomp(system('basename ' . resolve(expand('#'. bufnr(). ':p'))),
+    "     \ s:_cscope_auto_develop, s:_init_value))
 endif
 
 if ! exists("g:_environment")
@@ -72,7 +72,7 @@ endif
 if has("cscope")
 
 if ! exists("s:_csprg")
-    let s:_csprg = boot#chomped_system("which cscope")
+    let s:_csprg = boot#chomp(system("which cscope"))
 endif
 
     " Section: Default variables and Tunables {{{1
@@ -126,7 +126,7 @@ endif
                     if buflisted(b) && boot#project(l:buf_name, a:_environment) == a:_db_target._status._dir_project
                         let l:file_name = fnamemodify(resolve(expand("#". b . ":p")), ':p')
                         let a:_db_target._status._file_opened[l:file_name] =
-                            \ boot#chomped_system('basename ' . a:_db_target._status._dir_project)
+                            \ boot#chomp(system('basename ' . a:_db_target._status._dir_project))
                         if getbufvar(b, "&mod")
                             let l:dict[s:out_of_date] = 1
                             " let db_result = s:read_link_status(a:_db_target, a:_file_type, a:_environment)
@@ -242,9 +242,9 @@ endif
         endfor
         " let l:_db_target = s:_db_target_list[self._dir_project]
 
-        call boot#log_silent(a:_func_name . '::s:_db_.._list[' . boot#chomped_system('basename ' . self._dir_project) . ']._status::l:removed_item', l:removed_item, a:_environment)
-        call boot#log_silent(a:_func_name . '::s:_db_.._list[' . boot#chomped_system('basename ' . self._dir_project) . ']._status::l:chaged_value', l:chaged_value, a:_environment)
-        call boot#log_silent(a:_func_name . '::s:_db_.._list[' . boot#chomped_system('basename ' . self._dir_project) . ']._status::l:appened_item', l:appened_item, a:_environment)
+        call boot#log_silent(a:_func_name . '::s:_db_.._list[' . boot#chomp(system('basename ' . self._dir_project) . ']._status::l:removed_item', l:removed_item, a:_environment))
+        call boot#log_silent(a:_func_name . '::s:_db_.._list[' . boot#chomp(system('basename ' . self._dir_project) . ']._status::l:chaged_value', l:chaged_value, a:_environment))
+        call boot#log_silent(a:_func_name . '::s:_db_.._list[' . boot#chomp(system('basename ' . self._dir_project) . ']._status::l:appened_item', l:appened_item, a:_environment))
     endfunction
 
     " let s:_status = s:status.new()
@@ -582,7 +582,7 @@ endif
         endif
         let l:lock_file = l:_db_target._lock_file
         " " "wrong character '\n'" just for testing typoes :)
-        let date = boot#chomped_system("date")
+        let date = boot#chomp(system("date"))
 
         call boot#log_silent("date", date, s:_environment)
         call boot#log_silent(l:func_name . "::_dir_project", l:_db_target._status._dir_project, s:_environment)
@@ -737,7 +737,7 @@ endif
         " 1 == a:cscope_auto_develop
 
 
-        " call s:chomped_system("!clear & | redraw!")
+        " call s:chomp(system("!clear & | redraw!"))
         silent! execute "!clear &" | redraw!
         execute "redrawstatus!"
 
@@ -778,7 +778,7 @@ endif
         " call boot#log_silent("\n", "", a:_environment)
 
         " LogSilent a:_environment._log_address "\n" ""
-        " call boot#chomped_system("printf \n >> " . a:_environment._log_address . "  &>/dev/null")
+        " call boot#chomp(system("printf \n >> " . a:_environment._log_address . "  &>/dev/null"))
         " silent! execute "!(printf \n  >> " . a:_environment._log_address . " 2>&1) &>/dev/null"
 
         if has('perl')
@@ -913,7 +913,7 @@ endif
         endif
         let l:_db_target = a:_db_target
         let enter_state = deepcopy(l:_db_target._status, 1)
-        silent! execute 'set csprg=' . boot#chomped_system("which cscope")
+        silent! execute 'set csprg=' . boot#chomp(system("which cscope"))
         set csto=0
         set cst
         set nocsverb
@@ -1084,7 +1084,7 @@ endif
         "         "        \ l:_db_target._status._linked_complete, a:_environment)
         "     endif
         "     " let l:_db_target._status._file_complete_link_time = localtime()
-        "     " let l:_db_target._status._file_complete_link_time = boot#chomped_system("stat -L -c '%Y' '" . l:_db_target._file_complete . "'")
+        "     " let l:_db_target._status._file_complete_link_time = boot#chomp(system("stat -L -c '%Y' '" . l:_db_target._file_complete . "'"))
         " endif
 
         " Don't call hook if there are partial updates left.
@@ -1122,19 +1122,19 @@ endif
         let _next_step_available = 0
         let l:_db_target = a:_db_target
         " let l:update_time_not_arrived = localtime() <
-        "             \ boot#chomped_system("stat -L -c '%Y' '" . l:_db_target._file_complete . "'")
+        "             \ boot#chomp(system("stat -L -c '%Y' '" . l:_db_target._file_complete . "'"))
         "             \ + l:_db_target._complete_min_interval
 
         let l:update_time_not_arrived = 0
         " if filereadable(l:_db_target._file_partial)
         "     if l:_db_target._status._file_complete_link_time >
-        "         \ boot#chomped_system("stat -L -c '%Y' '" . l:_db_target._file_partial . "'")
+        "         \ boot#chomp(system("stat -L -c '%Y' '" . l:_db_target._file_partial . "'"))
         "         let l:update_time_not_arrived = 1
         "     endif
         " endif
         if filereadable(l:_db_target._file_complete)
             if l:_db_target._status._file_complete_link_time >
-                \ boot#chomped_system("stat -L -c '%Y' '" . l:_db_target._file_complete . "'")
+                \ boot#chomp(system("stat -L -c '%Y' '" . l:_db_target._file_complete . "'"))
                 let l:update_time_not_arrived = 1
             endif
         endif
@@ -1170,7 +1170,7 @@ endif
                     \ + l:_db_target._complete_min_interval
                 let _db_needs_update = s:try_unlock(l:_db_target, a:_environment)
                 " let l:update_time_not_arrived = localtime() <
-                "             \ boot#chomped_system("stat -L -c '%Y' '" . l:_db_target._file_complete . "'")
+                "             \ boot#chomp(system("stat -L -c '%Y' '" . l:_db_target._file_complete . "'"))
                 "             \ + l:_db_target._complete_min_interval
                 " if l:update_time_not_arrived
                 "     " localtime() < l:_db_target._status._file_complete_link_time + l:_db_target._complete_min_interval
@@ -1247,8 +1247,8 @@ endif
         " silent! execute "cd " . l:_db_target._status._dir_project
 
         " call boot#log_silent(l:func_name, "touch " . l:_db_target._lock_file, a:_environment)
-        call s:shell_silent({ -> boot#chomped_system('if [ -f "' . l:_db_target._lock_file . '" ];
-            \ then echo 0; else echo 1; fi') }, "touch " . l:_db_target._lock_file, l:_db_target, a:_environment)
+        call s:shell_silent({ -> boot#chomp(system('if [ -f "' . l:_db_target._lock_file . '" ];
+            \ then echo 0; else echo 1; fi')) }, "touch " . l:_db_target._lock_file, l:_db_target, a:_environment)
 
         " let cmd_for_file_complete = ""
         " let cmd_for_file_partial = ""
@@ -1293,8 +1293,8 @@ endif
             " " let cmd = substitute(call('execute', ['l:_db_target._cmd_for_file_' . a:_file_type . '()']), '\n\+$', '', '')
             " call boot#log_silent(l:func_name . "::cmd_eval", cmd_eval, a:_environment)
 
-            let result = s:shell_silent({ -> boot#chomped_system('if [ -f "' . eval('l:_db_target._file_' . a:_file_type) . '" ];
-                \ then echo 0; else echo 1; fi') }, eval('l:_db_target._cmd_for_file_' . a:_file_type)(), l:_db_target, a:_environment)
+            let result = s:shell_silent({ -> boot#chomp(system('if [ -f "' . eval('l:_db_target._file_' . a:_file_type) . '" ];
+                \ then echo 0; else echo 1; fi')) }, eval('l:_db_target._cmd_for_file_' . a:_file_type)(), l:_db_target, a:_environment)
 
         endif
 
